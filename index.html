@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Sky20 by wangfakang</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Sky20</h1>
+        <p class="header">nginx about waf</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/wangfakang/sky20/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/wangfakang/sky20/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/wangfakang/sky20">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/wangfakang">wangfakang</a></p>
+
+
+      </header>
+      <section>
+        <p><code>nginx waf 相关的解析:</code></p>
+
+<p>前段时间看过一个nginx waf相关的项目<a href="https://github.com/centos-bz/HttpGuard">HttpGuard</a>还不错. </p>
+
+<h1>
+<a id="基本原理" class="anchor" href="#%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>基本原理</h1>
+
+<p>总的思想还是蛮简单的,利用openresty的大发:       </p>
+
+<ul>
+<li>1.在init_by_lua阶段做一些waf的初始化的工作[如限速模块的最大访问频率以及所要保护的url等等]总体来说还是比较灵活.</li>
+<li>2.在access_by_lua阶段做一些流量的入口检测,看看是否命中配置中所写的安全规则[如是否在访问频率之内等等].<br>
+</li>
+</ul>
+
+<h1>
+<a id="总体设计" class="anchor" href="#%E6%80%BB%E4%BD%93%E8%AE%BE%E8%AE%A1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>总体设计:</h1>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-c1">.</span>
+├── captcha
+├── config.lua
+├── guard.lua
+├── html
+├── init.lua
+├── logs
+├── README.md
+├── runtime.lua
+└── url-protect</pre></div>
+
+<ul>
+<li>其中config.lua中是一些关于waf相关的一些配置,如:根据访问速度进行保护,根据cookie认证进行保护,js跳转等.当然还有就是
+如果触发了相应的保护阀值后会放入黑名单然后下次再来请求时所进行的处理操作[如:直接forbidden,填写验证码,或者在设置防
+火墙禁止该ip访问].<br>
+</li>
+<li>然后guard.lua中主要就是相应保护的具体实现.<br>
+</li>
+<li>runtime.lua就是对guard.lua的封装.<br>
+</li>
+<li>url-protect文件里面存放了各种受保护的url,支持正则.<br>
+</li>
+</ul>
+
+<h1>
+<a id="值得改善" class="anchor" href="#%E5%80%BC%E5%BE%97%E6%94%B9%E5%96%84" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>值得改善</h1>
+
+<p>对该项目的总体感觉:<br>
+   该项目整体来说还不错,但是也有不足之处.比如可以做如下几点改进:     </p>
+
+<ul>
+<li> 1.可以把waf的一些规则变成动态可修改的方式,这样比较灵活.[可以使用redis进行存储,然后sharedict进行缓存定时更新或者主动更新].</li>
+<li> 2.代码可以进行相应的模块化,方便后续的功能扩展,比如各种安全控制按照方法可以独自写.降低工程文件的耦合.</li>
+<li> 3.项目中的一些日志操作是自己调用lua的io.open这点在nginx_lua中是很忌讳的,大大的消减了nginx的高并发.一般情况下在ngx_lua开发的过程中尽量使用ngx_lua提供的一些lua操作,由于lua的好多自身的操作是阻塞的,会阻塞当前worker的导致并发量下降,当然该项目中使用的貌似有好基础lua自身的api做一些事情,如果把这个改善下
+性能应该直接上升.<br>
+自己的小小想法,欢迎拍砖.<br>
+</li>
+</ul>
+
+<h1>
+<a id="communite--" class="anchor" href="#communite--" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Communite  </h1>
+
+<p>在使用中有任何问题，欢迎反馈给我，可以用以下联系方式跟我交流</p>
+
+<ul>
+<li>邮件(1031379296#qq.com, 把#换成@)</li>
+<li>QQ: 1031379296</li>
+<li>weibo: <a href="http://weibo.com/fakangwang">@王发康</a>
+</li>
+</ul>
+
+<h1>
+<a id="thx" class="anchor" href="#thx" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Thx</h1>
+
+<ul>
+<li>chunshengsterATgmail.com</li>
+</ul>
+
+<h1>
+<a id="author" class="anchor" href="#author" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Author</h1>
+
+<ul>
+<li>Linux\nginx\golang\c\c++爱好者</li>
+<li>欢迎一起交流  一起学习# </li>
+<li>Others say good and Others good</li>
+</ul>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		          <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("nginx  waf dynamic");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
